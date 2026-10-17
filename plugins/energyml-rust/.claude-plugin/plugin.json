@@ -1,0 +1,23 @@
+{
+  "name": "energyml-rust",
+  "version": "0.1.0",
+  "description": "Read, check, analyse, export and write EnergyML data (RESQML, WITSML, PRODML) in EPC packages and their HDF5 files through the energyml-rust command line and Python package: list, show, check, repair, export to OBJ/GeoJSON/CSV/VTK, read well logs and series, extract, rename the data file, create objects from CSV or GeoJSON; originals never overwritten, writes only after a plan and your yes.",
+  "author": {
+    "name": "Geosiris",
+    "url": "https://www.geosiris.com"
+  },
+  "homepage": "https://github.com/geosiris-technologies/energyml-rust",
+  "repository": "https://github.com/geosiris-technologies/claude-plugins",
+  "license": "Apache-2.0",
+  "keywords": [
+    "energyml",
+    "epc",
+    "hdf5",
+    "resqml",
+    "witsml",
+    "prodml",
+    "energistics",
+    "geoscience",
+    "subsurface"
+  ]
+}
