@@ -1,0 +1,19 @@
+{
+  "name": "geosiris-technologies",
+  "owner": {
+    "name": "Geosiris",
+    "url": "https://www.geosiris.com"
+  },
+  "metadata": {
+    "description": "Claude Code plugins from Geosiris for subsurface and energy data: ETP servers, EnergyML (RESQML, WITSML, PRODML)."
+  },
+  "plugins": [
+    {
+      "name": "retp",
+      "source": "./plugins/retp",
+      "description": "Work with ETP v1.2 servers (RESQML, WITSML, PRODML, OSDU Reservoir DDMS) through the retp command line: probe, list, read, download, check conformance, serve a dataspace over MCP; credentials by reference only, writes only with consent.",
+      "category": "database",
+      "keywords": ["etp", "energistics", "resqml", "witsml", "prodml", "osdu", "rddms", "energyml"]
+    }
+  ]
+}
