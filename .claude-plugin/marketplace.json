@@ -14,6 +14,13 @@
       "description": "Work with ETP v1.2 servers (RESQML, WITSML, PRODML, OSDU Reservoir DDMS) through the retp command line: probe, list, read, download, check conformance, serve a dataspace over MCP; credentials by reference only, writes only with consent.",
       "category": "database",
       "keywords": ["etp", "energistics", "resqml", "witsml", "prodml", "osdu", "rddms", "energyml"]
+    },
+    {
+      "name": "energyml-rust",
+      "source": "./plugins/energyml-rust",
+      "description": "Read, check, analyse, export and write EnergyML data (RESQML, WITSML, PRODML) in EPC packages and their HDF5 files through the energyml-rust command line and Python package: list, check, repair, export to OBJ/GeoJSON/CSV/VTK, well logs and series, extract, rename, create from CSV or GeoJSON; originals never overwritten, writes only with consent.",
+      "category": "database",
+      "keywords": ["energyml", "epc", "hdf5", "resqml", "witsml", "prodml", "energistics"]
     }
   ]
 }
