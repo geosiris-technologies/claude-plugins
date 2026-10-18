@@ -79,9 +79,18 @@ docker run --rm -v "$PWD:/work" ghcr.io/geosiris-technologies/energyml:0.3.0 lis
 docker run --rm -i -v "$PWD:/work" ghcr.io/geosiris-technologies/energyml:0.3.0 energyml-mcp model.epc
 ```
 
-The image holds `energyml` (with HDF5 and PNG) and `energyml-mcp`; it runs as uid 1000 in
-`/work`. The `.epc` and its `.h5` must both be inside the mounted folder. (The tag list was
-read from the registry; the image itself was not run here: no Docker daemon was available.)
+The image is public (no login). It holds `energyml` with HDF5 **and PNG**, `energyml-mcp`
+and the `enyml` alias; it runs as uid 1000 in `/work`. Checked with Docker Desktop on Windows,
+on Lutetia: the same output as the 0.3.0 Windows archive (`h5`, `profile --svg`), about 2 s per
+command instead of 0.3 s, and `profile --png` works there while the archives refuse it.
+
+- The `.epc` and its `.h5` must both be inside the mounted folder; give paths relative to it.
+  Outputs are written into it, owned by uid 1000 on Linux (add `--user "$(id -u):$(id -g)"` if
+  the user cannot then edit them).
+- **PowerShell**: `-v "${PWD}:/work"`. **Git Bash on Windows** rewrites paths: prefix the line
+  with `MSYS_NO_PATHCONV=1` and mount `"$(pwd -W):/work"`, or Docker sees a mangled path.
+- `--rm` leaves nothing behind but the image; `docker image rm ghcr.io/geosiris-technologies/energyml:0.3.0`
+  removes it.
 
 ## After installing
 

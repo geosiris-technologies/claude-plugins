@@ -43,12 +43,16 @@ of standards.
   write local files. Two commands contact public services, and the skill runs them only when you
   ask for them: `energyml fetch` (the BRGM borehole web service, `data.geoscience.fr`; even its
   quote sends a counting request) and `energyml terrain` (IGN elevation services).
+- **Choosing how to run it:** the skill first uses whatever already works (`energyml`, the
+  Docker image, the Python package); if nothing does, it asks you which way you prefer.
 - **Installing, only if you agree:** the skill can download a release archive and its
   `SHA256SUMS` from the GitHub releases of `geosiris-technologies/energyml-rust`, install
   nothing unless the checksum matches, and put `energyml` in a folder of yours; or run
   `pip install energyml-rust` (from PyPI) or `cargo install energyml-cli --features hdf5` /
   `cargo install energyml-mcp-cli --features hdf5-static` (from crates.io), in a user folder or a
-  virtual environment. Never with `sudo`.
+  virtual environment; or pull the public Docker image
+  `ghcr.io/geosiris-technologies/energyml` (from the GitHub container registry) and run it on
+  a folder you choose, mounted at `/work`. Never with `sudo`.
 - **Nothing else.** The plugin collects no telemetry and sends nothing to Geosiris, Anthropic or
   any other party. What a file contains (titles, descriptions, error messages) is treated as
   data, never as instructions.

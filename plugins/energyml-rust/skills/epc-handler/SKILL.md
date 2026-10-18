@@ -39,15 +39,33 @@ version or a build feature:
 | every command of this skill (`list`, `check`, `show`, `arrays`, `h5`, `export`, `extract`, `rename`, `create`, ...) | 0.3.0 tested; the commands exist from 0.1.x but were not tested here |
 | reading arrays (geometry, export, `arrays --values`, `series`, `wells`, `extract` copying arrays) | a build **with HDF5**: release archives from 0.1.2 except the Linux **musl** ones; `cargo install energyml-cli --features hdf5`; the PyPI wheels |
 | `energyml-mcp` (MCP server over one EPC) | 0.2.0; **not in the release archives**: `cargo install energyml-mcp-cli --features hdf5-static`, or the Docker image `ghcr.io/geosiris-technologies/energyml:0.3.0` |
-| `profile --png` | a build with the `png` feature; the 0.3.0 archives do not have it (`--svg` works) |
+| `profile --png` | a build with the `png` feature: the Docker image has it, the 0.3.0 archives do not (`--svg` works everywhere) |
 | `profile --fill`, `--hide-notes` | 0.1.1 |
 
 A build without HDF5 refuses array reads **by name** ("no support for `application/x-hdf5`
 (build with the `hdf5` feature)"): the data is not missing, the means to read it is. Say so and
-suggest a gnu/macOS/Windows archive or the Python wheel. If `energyml` is missing, see
-[references/install.md](references/install.md): a release archive checked against its
-`SHA256SUMS`, `pip install energyml-rust`, or `cargo install energyml-cli --features hdf5`.
-**Ask before installing anything**, and install into a user folder or a virtual environment.
+suggest a gnu/macOS/Windows archive, the Docker image or the Python wheel.
+
+### Choose how to run it
+
+First look at what the machine already has, without asking: `energyml --version`,
+`docker image ls ghcr.io/geosiris-technologies/energyml` (and `docker --version`), and
+`python -c "import energyml.rust"` in the user's environment. If one works at a suitable
+version, use it. If none does, **ask the user to choose**, and say what each means:
+
+| Way | Gives | Choose it when |
+|---|---|---|
+| **Release archive** (recommended) | the `energyml` command, with HDF5 (not on musl); nothing else to install | the user wants the command; fastest (0.3 s a command on Lutetia) |
+| **Docker image** `ghcr.io/geosiris-technologies/energyml:0.3.0` (public) | the same commands with the same results, **plus** `profile --png` and `energyml-mcp` | Docker is already there and the user prefers to install nothing, or needs PNG or MCP; about 2 s more per command |
+| **Python wheel** `pip install energyml-rust` | a library (`energyml.rust`), **not** the `energyml` command | a script, numpy arrays, or `needs(...)` to close a selection (section 6); a complement, not a replacement |
+| **Cargo** | a build from source (Rust, the HDF5 headers, minutes, about 2 GB) | only for someone developing energyml-rust |
+
+Commands in this skill are written `energyml <command> ...`. Through Docker the same line
+is `docker run --rm -v "<folder>:/work" ghcr.io/geosiris-technologies/energyml:0.3.0 <command> ...`,
+run on files **inside** `<folder>` with paths relative to it (the `.epc` and its `.h5` both
+in it); details and the Windows forms in [references/install.md](references/install.md).
+**Ask before installing anything**, say what and where, and install into a user folder or a
+virtual environment.
 
 ## 2. Rules, and why
 
@@ -162,9 +180,15 @@ yes, write, then verify the result (`energyml check NEW.epc | tail -1` and `ener
 NEW.epc`).
 
 - **A copy with only some objects** ("only the wells"): the selection must be closed (every
-  object it references comes along). Python `Epc.copy_from` closes it for you; `energyml
-  extract` refuses a selection that is not closed and needs a manifest `{"manifest": 1,
-  "chosen": [URI, ...]}`, which no page documents.
+  object it references comes along). `energyml extract` refuses a selection that is not
+  closed and needs a manifest `{"manifest": 1, "chosen": [URI, ...]}`, which no page documents.
+  Close it with Python `needs(...)` or `Epc.copy_from`, which do it for you: if the wheel is
+  not installed, **offer to install it** in a virtual environment (section 1) rather than
+  rebuilding the closure by hand from `graph`, which costs many steps. Without Python, loop on
+  `extract --dry-run`: it lists the references the selection would break (exit 0); add those
+  objects to `chosen` and run it again until it reports none. Say which objects "only the
+  wells" means before choosing (RESQML trajectories and frames, WITSML `Well`/`Wellbore`/
+  `Trajectory`/`Log`, or both).
 - **Rename the data file**: on a copy, `energyml rename COPY.epc --from OLD.h5 --to NEW.h5`
   (quote), then `--apply --out ...`. 0.3.0 asks for `--from` when the arrays name their file
   directly, which is the usual case.
