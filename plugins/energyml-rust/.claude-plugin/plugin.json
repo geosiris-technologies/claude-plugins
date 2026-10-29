@@ -9,6 +9,7 @@
   "homepage": "https://github.com/geosiris-technologies/energyml-rust",
   "repository": "https://github.com/geosiris-technologies/claude-plugins",
   "license": "Apache-2.0",
+  "icon": "./icon.png",
   "keywords": [
     "energyml",
     "epc",
