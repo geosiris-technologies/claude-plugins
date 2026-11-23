@@ -8,9 +8,12 @@ original, plan first, an explicit yes, then verify.
 1. **A work folder of its own.** Create a new, empty folder. If the command reads an existing
    package (`extract`, `rename`, `h5 --fix`, `create --into`, `repair --apply`, `relabel`),
    copy the `.epc` **and every `.h5` it names** (`energyml h5 FILE.epc` lists them) into it,
-   and run the command on the copy. Why, as measured with 0.3.0:
+   and run the command on the copy. Why, as measured with 0.3.0 (the first two again with
+   0.4.0):
    - `extract --out` writes the arrays it keeps into an `.h5` named like the source's, beside
-     the output: with the output in the source's folder, it rewrote the source `.h5`;
+     the output: with the output in the source's folder, it rewrote the source `.h5` (0.4.0
+     refuses `--out` equal to the source `.epc`: "is the package being read: extracting onto
+     it would destroy it", but not this);
    - `rename --apply` moves the data file itself, whatever `--out` says;
    - `create --into SRC.epc --out OTHER/NEW.epc` writes a package that still names the
      source's `.h5` by a relative path, so in another folder it reads `NOT FOUND` until the
@@ -84,13 +87,16 @@ energyml rename W/FILE.epc --from FILE.h5 --to FILE_2026.h5 --apply --out W/FILE
 energyml h5 W/FILE-renamed.epc                                     # → W/FILE_2026.h5
 ```
 
-`--to` is a bare name, not a path. Without `--from`, 0.3.0 refuses with "declares no external
+`--to` is a bare name, not a path. Without `--from`, 0.3.0 and 0.4.0 refuse with "declares no external
 data file - pass `--from <NAME>`" on packages whose arrays name their file directly (Lutetia):
 take the name from `energyml h5`. The quote on Lutetia: `738 field(s) in 663 object(s), 0
 relationship(s)`. `--apply` moves the `.h5`, so the copy's original `.epc` now names a file that
 is gone (it still reads only because the folder holds a single `.h5`): keep the renamed one.
+The data file moves beside the source, not beside `--out`: write `--out` in the same folder, or
+the new package reads `NOT FOUND` (0.4.0, `--out` in a subfolder).
 Python: `plan_rename(old, new)` then `rename_data_file(old, new)` **and** `save_as(...)`
-straight after: the rename moves the file at once but rewrites the package only on save.
+straight after: the rename moves the file at once but rewrites the package only on save
+(0.3.0 and 0.4.0).
 
 ## Creating objects: `energyml create`
 
@@ -102,8 +108,8 @@ energyml create crs --set epsg=2154 --set vertical=5720 --plan
 energyml create crs --set epsg=2154 --set vertical=5720 --out W/crs.epc
 ```
 
-0.3.0 lists 79 operations (categories: create, geometry, synthetic, wells, import, faults,
-analysis, frame, properties). Parameters are `--set name=value` (a number, `true`/`false`, a
+0.3.0 lists 79 operations, 0.4.0 lists 83 (categories: create, geometry, synthetic, wells,
+import, faults, analysis, frame, properties). Parameters are `--set name=value` (a number, `true`/`false`, a
 JSON list `[...]` for list parameters, or text); inputs are `--from FILE`, `--from
 FILE.epc#UUID`, or `--from SLOT=...` when the operation names slots (`edit-object` needs
 `--from object=...`). `--now 2026-10-17T00:00:00Z` fixes the time stamp so two runs give the
@@ -149,8 +155,9 @@ energyml create --recipe recipe.toml --without erreur --out W/clean.epc
 ```
 
 The Lutetia recipe (105 steps played, 17 on hold) writes the 4.7 MB package and its 22.5 MB
-`.h5` in 3.75 s. `--plan` **failed** on it in 0.3.0 (`step etages ... refused, and the run stops
-there`: a later step reads arrays an earlier step only planned). For such a recipe the plan is
+`.h5` in 3.75 s (0.3.0; 0.4.0 on the recipe as published today: 119 played, 3 held, 4.7 s). `--plan` **failed** on it in 0.3.0
+and again in 0.4.0 (`step etages ... refused, and the run stops there`: a later step reads
+arrays an earlier step only planned). For such a recipe the plan is
 the write into a scratch folder, reported before anything is kept. Recipe keys are French
 (`etape`, `nom`, `operation`, `entrees`, `attente`); file paths are relative to the recipe's
 folder.

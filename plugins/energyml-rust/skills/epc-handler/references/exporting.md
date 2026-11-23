@@ -115,4 +115,39 @@ Without `--svg` it lists the wells whose head falls in the band (distance along,
 With `--svg` it draws wells, surfaces and grids cut along the track, and prints each refused
 object (a well too far, an object in time without `--time-factor`). The track is in the
 package's projected coordinates unless `--placement`. `--png` needs a build with `png`; the
-0.3.0 archives refuse it (exit 2) after having written the SVG.
+0.3.0 and 0.4.0 archives refuse it (exit 2) after having written the SVG.
+
+## Pictures of a package: `view`
+
+New in 0.4.0, command line only (the Python package and `energyml-mcp` do not draw views).
+
+```sh
+energyml view list FILE.epc                          # every view each object can give, from the index alone
+energyml view list FILE.epc --object UUID            # only the views of one object
+energyml view about well-locator                     # its objects (slots) and settings, with defaults
+mkdir -p out && energyml view draw well-locator FILE.epc --object URI --set md=100 --svg out/locator.svg
+energyml view draw along-well FILE.epc --object URI --proposed --svg out/section.svg
+energyml view redraw FILE.epc --from-svg out/locator.svg --svg out/again.svg
+```
+
+Views offered on Lutetia (0.4.0): `well-locator`, `well-sheet`, `along-well`, `md-coverage`,
+`survey-qc`, `property-insight`, `provenance-graph`, `table-schema`. `view list` reads no array,
+so an offered view can still be refused at `draw` (on Lutetia, `well-sheet` of `GTH-1 - frame`:
+"the frame carries no stratigraphy and no interval property to draw", exit 2, nothing
+written). Quote such a refusal.
+
+- `--object` takes a full URI or a bare uuid, repeated in the order of the view's slots
+  (`view about` lists them). `--set NAME=VALUE` gives a setting.
+- `--proposed` fills the settings the file does not state with values the view proposes, and
+  prints each as `proposed: NAME=VALUE - why`. Those values are guesses, not data: use it only
+  when the user asks for a first drawing, and tell them every proposed value.
+- `view draw` writes only the SVG you name (a new path; the folder must exist).
+  `view redraw` replays the request kept in an SVG: on the same package, the same bytes
+  (checked on Lutetia).
+- `--png` needs a build with `png`: the 0.4.0 archives refuse it (exit 2) before writing
+  anything, so draw the SVG alone.
+- Colours come from the package when it gives a colour map; otherwise a default palette is
+  used and the picture says so (Lutetia, `property-insight`: `colours: palette Viridis (not
+  from the file)`). Pass that on; do not present the colours as the package's.
+- Notes about what a view left out go to stderr (`note: ...`) and under the picture: report
+  them.

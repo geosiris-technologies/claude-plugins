@@ -1,7 +1,9 @@
 # Reading a package
 
 Every command below reads and writes nothing (except `graph -o`, `wells -o` and `docs --out`,
-which write the file you name). Outputs shown are from energyml 0.3.0 on Lutetia
+which write the file you name, and `view draw`, see [exporting.md](exporting.md)). Outputs
+shown are from energyml 0.3.0 (`list`, `h5`, `geometry`, `series`, `wells` and `graph` gave
+the same counts with 0.4.0) on Lutetia
 (`package/Lutetia.epc` of
 [energyml-lutetia](https://github.com/geosiris-technologies/energyml-lutetia), 1 303 objects of
 67 types, one 22.5 MB HDF5 file). Global flags (`--strict`, `--lenient`, `--h5`, `--log`) go
@@ -63,6 +65,19 @@ Lutetia.h5  738 pointer(s)  → NOT FOUND  (looking for `/resqml22/…/values`) 
 
 `arrays` says `0 unresolved` even when the file is absent: it counts names, not files. Only
 `h5` (and an actual read) tells whether the data is there.
+
+From 0.4.0 a command that read arrays from a file found by the search, not from the one the
+package names, says so on stderr when it ends (measured on Lutetia with the `.h5` renamed):
+
+```text
+warning: 736 dataset(s) read from `…\renamed.h5` instead of the file they point at (the package names `Lutetia.h5`): another file in the package's folder
+warning: --h5 `typo.h5` does not exist and is ignored
+```
+
+The count is of datasets read by that command (`geometry` said 201, `arrays --values` 736).
+A file you gave with `--h5` is used without a word. Upstream page: `docs/array-files.md`
+("Where the arrays are looked for": the order is the pinned `--h5`, the offered `--h5`, the
+name the package writes, the file with the package's name, any other file in its folder).
 
 ## geometry — what can be drawn
 

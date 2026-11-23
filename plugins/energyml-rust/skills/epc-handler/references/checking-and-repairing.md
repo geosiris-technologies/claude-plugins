@@ -24,7 +24,7 @@ The report starts with `== FILE ==` and then, in order:
 | `schema:` | schema validation of every object | issues |
 | `properties:` | property kinds (abstract kind used, unknown kind), units against kinds | issues, **and notes** |
 | `property counts:` | values held against values declared (needs HDF5) | errors and `[remark]`s |
-| `business rules: N violation(s) over 31 rule(s)` | rules from the technical guides (`trg/...`) and house rules (`house/...`), each with `[error]` or `[warning]` and the document it cites | errors/warnings as marked |
+| `business rules: N violation(s) over 31 rule(s)` (37 in 0.4.0) | rules from the technical guides (`trg/...`) and house rules (`house/...`), each with `[error]` or `[warning]` and the document it cites | errors/warnings as marked |
 | `references:` | references to objects the package does not hold | issues |
 | `references to the Energistics catalogue: N` | well-known `PropertyKind`s not carried, **expected** | nothing |
 | `relationships:` | `.rels` disagreeing with the objects | warnings |
@@ -39,7 +39,8 @@ The report starts with `== FILE ==` and then, in order:
 4. The notes that are **not** findings, counted in one sentence each: "was not checked: this
    build converts four families of unit" (units the build cannot check), "not checkable: its
    lookup has 0 key column(s)", "(249 that could not be counted, so not checked)". Lutetia's
-   clean package has 30 + 449 such notes and `0 error(s), 0 warning(s)`.
+   clean package has 30 + 449 such notes and `0 error(s), 0 warning(s)` with 0.3.0; with
+   0.4.0 it reads `0 error(s), 79 warning(s)` (see below).
 
 On `package-with-errors/Lutetia.epc` (0.3.0, 0.65 s) the verdict is `8 error(s), 1 warning(s)`:
 two abstract property kinds (`property`, `force per length`, in `properties:`), and seven
@@ -50,6 +51,16 @@ business-rule violations: `trg/contact-element-is-geological`,
 `house/time-series-asset-resolves` (warning). That is what the variant's
 `docs/errors.md` says it should find; the check reports 1 342 objects where the inventory says
 1 341 (the second version of one object is counted).
+
+With 0.4.0 (about 4.2 s) the same package reads `8 error(s), 92 warning(s)`: the same 8 errors
+and `house/time-series-asset-resolves`, plus 91 warnings of a house rule new in 0.4.0,
+`house/provenance/activity-follows-its-template` (an activity's parameters disagree with the
+template its `ActivityDescriptor` names: `parameter \`input\` (0) is not in the template`,
+`is written double, the template allows integer`). The published Lutetia packages were written
+by an older energyml; the same recipe played by 0.4.0 gives `8 error(s), 1 warning(s)` again.
+On a package built by an older tool, report these warnings as one group about provenance
+records, not as defects of the model. `check` shows at most 50 findings per section: count
+with `--max 1000`.
 
 ### What `check` does not tell you
 
@@ -94,13 +105,17 @@ energyml --h5 COPY/renamed.h5 h5 COPY/FILE.epc --fix NEW/fixed.epc   # write the
 Measured: a renamed `.h5` that is the only HDF5 file in the package's folder is found by
 itself (`[another file in the package's folder]`). A file elsewhere (a `data/` subfolder) or
 nowhere gives `NOT FOUND`, and every read refuses with `is in none of the 0 candidate file(s)`.
-Ask the user where the file is; do not guess another `.h5`.
+Ask the user where the file is; do not guess another `.h5`. From 0.4.0 a read served by the
+folder search ends with `warning: N dataset(s) read from ... instead of the file they point
+at` on stderr (see [reading.md](reading.md#h5-and-arrays--where-the-numbers-are)).
 
 **To write the new name into the package, prefer `rename` to `h5 --fix`.** On Lutetia,
 `h5 --fix` rewrote 660 declarations (735 of the 738 pointers) and left the 3 WITSML
 channel-data pointers (`/witsml21/.../ChannelData`) on the old name; they kept working only
-because the folder search found the file. `rename` rewrote all 738, and it accepts an old name
-whose file is gone:
+because the folder search found the file. Same result with 0.4.0, and with its Python
+`repair_arrays` (which reports `lost: 0` all the same), although the 0.4.0 changelog lists a
+fix to this repair for proxy references. `rename` rewrote all 738 (0.3.0 and 0.4.0), and it
+accepts an old name whose file is gone:
 
 ```sh
 mkdir W && cp FILE.epc W/ && cp path/to/renamed.h5 W/       # side by side: names are bare, no subfolder

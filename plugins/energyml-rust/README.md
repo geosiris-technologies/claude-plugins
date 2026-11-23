@@ -18,8 +18,8 @@ of standards.
 
 ## What it needs
 
-- The `energyml` command line, 0.3.0 recommended (the skill was written and tested against
-  0.3.0), built with HDF5 to read arrays: the GitHub release archives for Linux (gnu), macOS
+- The `energyml` command line, 0.4.0 recommended (the skill was written and tested against
+  0.3.0 and checked again against 0.4.0), built with HDF5 to read arrays: the GitHub release archives for Linux (gnu), macOS
   and Windows are; the Linux musl archives are not. The skill checks `energyml --version` first
   and, if the command is missing, offers to install it — only after you agree.
 - Optional: the Python package `energyml-rust` (for scripts, numpy arrays, copying objects

@@ -7,13 +7,13 @@ window of one. No tool writes. `energyml-mcp --help` is the authority on options
 
 ## Installing it
 
-It is **not** in the release archives. Either:
+It is **not** in the release archives (0.3.0 and 0.4.0 checked). Either:
 
-- `cargo install energyml-mcp-cli --version 0.3.0 --locked --features hdf5-static` (builds
-  HDF5 from source; needs CMake and a C compiler). Measured: 9 min 33 s on 4 cores, a 207 MB
-  binary, about 1.1 GB of build files. Without an HDF5 feature, array tools refuse
+- `cargo install energyml-mcp-cli --version 0.4.0 --locked --features hdf5-static` (builds
+  HDF5 from source; needs CMake and a C compiler). Measured on 0.3.0: 9 min 33 s on 4 cores, a
+  207 MB binary, about 1.1 GB of build files. Without an HDF5 feature, array tools refuse
   `feature_not_enabled`. Ask before starting a build of that size.
-- or the Docker image `ghcr.io/geosiris-technologies/energyml:0.3.0`, which holds
+- or the Docker image `ghcr.io/geosiris-technologies/energyml:0.4.0`, which holds
   `energyml-mcp` (not run here).
 
 `energyml mcp FILE.epc` runs `energyml-mcp` when it is on the PATH; otherwise it says
@@ -54,6 +54,14 @@ the OBJ export.
 | `energyml_get_references` | `uri` (required), `direction` (`targets`/`sources`/`both`), `depth`, `limit` | read `objects` (the answer); `edges` holds every edge touching them: 803 for F1's 2 targets, truncated at 100 |
 | `energyml_list_arrays` | `uri` or `uuid`, `limit`, `cursor` | `index`, `dataset_path`, `dimensions`, `element_type`, `readable` |
 | `energyml_read_array_window` | `uri`, `array` (the `index` above), `start`, `count`, `preview`, `statistics` | at most 10 000 elements per window; never the whole array |
+
+In 0.4.0, the upstream `docs/mcp.md` says each edge of `energyml_get_references` carries a
+`kind` (primary, secondary), with `kind_basis` (`derived-xsd`, `derived-by-value`, `default`)
+when the specification does not give it, and that `edge_kind_coverage` is `all` or names the
+standards it is stated for. A `default` kind is the library's choice, not the standard's: say
+so when you report one. TODO(verify): energyml-mcp 0.4.0 was not run here (the tool table above
+is from 0.3.0); `energyml graph` 0.4.0 does not write edge kinds (edges hold `from`, `to`,
+`path` only).
 
 A tool that cannot answer returns `isError: true` with `{"refusal": {"code", "message",
 "hint", "detail", "candidates"}}`; codes include `not_found`, `ambiguous`, `bad_uri`,
