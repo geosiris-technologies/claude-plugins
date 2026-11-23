@@ -12,8 +12,9 @@ no MCP server and no agent of its own.
 
 ## What it needs
 
-- The `retp` command line, 0.3.0 or later, on the PATH. The skill checks `retp --version`
-  first and, if `retp` is missing, offers to install it — only after you agree.
+- The `retp` command line, 0.3.0 or later (0.4.0 for extra headers such as OSDU's data
+  partition, and for planning or resuming a push), on the PATH. The skill checks
+  `retp --version` first and, if `retp` is missing, offers to install it, only after you agree.
 - An ETP server you are allowed to use, and its credentials kept in a file or an environment
   variable of your own.
 - Optional: `retp-conformance`, to judge a server against the specification.

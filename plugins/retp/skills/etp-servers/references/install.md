@@ -2,7 +2,9 @@
 
 Ask the user before installing anything, and say where it will go. Check first:
 `retp --version` (and `retp-conformance --version`). A version below 0.3.0 has no server
-catalogue; see the table in `SKILL.md`.
+catalogue, one below 0.4.0 sends no extra header and has no `push --plan`; see the table in
+`SKILL.md`. Suggest the latest release (0.4.0 when this was written) to a user who has an
+older one.
 
 ## The release archives (recommended)
 
@@ -41,7 +43,7 @@ without it `download-epc` refuses to write arrays and says so (`--no-arrays` sti
 ## Docker
 
 ```sh
-docker pull ghcr.io/geosiris-technologies/retp:latest     # or a version tag: 0.3.0, 0.3
+docker pull ghcr.io/geosiris-technologies/retp:latest     # or a version tag: 0.4.0, 0.4, 0.3.0, 0.3
 ```
 
 The image has `retp` (with HDF5 and, from 0.3.0, `mcp`) as its entry point and

@@ -1,7 +1,7 @@
 {
   "name": "retp",
-  "version": "0.1.1",
-  "description": "Talk to ETP v1.2 servers (RESQML, WITSML, PRODML, OSDU Reservoir DDMS) through the retp command line: probe, list, read, download, check conformance, serve a dataspace over MCP; credentials by reference only, writes only with consent.",
+  "version": "0.1.2",
+  "description": "Work with ETP v1.2 servers (RESQML, WITSML, PRODML, OSDU Reservoir DDMS) through the retp command line: probe, list, read, download, plan and resume a push, check conformance, serve a dataspace over MCP; credentials by reference only, writes only with consent.",
   "author": {
     "name": "Geosiris",
     "url": "https://www.geosiris.com"

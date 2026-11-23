@@ -5,7 +5,7 @@ description: >-
   RESQML, WITSML and PRODML stores, OSDU Reservoir DDMS (RDDMS). Use it when the user says
   "connect to this ETP server", "probe this server", "list the dataspaces", "what is in this
   dataspace", "get this object", "read this array", "download this dataspace as an EPC",
-  "push this EPC", "create/delete a dataspace", "add this server to the catalogue", "test this
+  "push this EPC", "what would this push send", "resume this push", "create/delete a dataspace", "add this server to the catalogue", "test this
   server", "check this server's conformance", "serve this dataspace over MCP", gives a `wss://`
   or `ws://` URL of an ETP endpoint, an `eml:///dataspace('...')` URI, or mentions RDDMS, ADME or
   an OSDU data partition. Also for installing `retp`. Not for reading a local EPC/HDF5 file with
@@ -36,11 +36,18 @@ a release, and some features need a minimum version:
 | the server catalogue: `retp catalog init`, `retp server add/list/show/remove/test/default`, `retp NAME`, `retp @NAME`, `--server`, `--save-as`, `--yes` | 0.3.0 |
 | `subscribe` / `subscriptions` / `unsubscribe` in the shell | 0.3.0 |
 | `retp-conformance --server NAME` | 0.3.0 |
+| `--header NAME=VALUE` (`-H`, repeatable) on every command that reaches a server; headers in a catalogue entry actually sent | 0.4.0 |
+| the OSDU data partition as `--header data-partition-id=P` (**`--partition` is refused from 0.4.0**; before 0.4.0, `--partition P`) | 0.4.0 |
+| `push --plan`, `--journal`, `--skip-present`, `--split`, `--reconnect`, `--resume-session` | 0.4.0 |
+| `server add --other-relevant-data-country` (OSDU write default) | 0.4.0 |
 
 If a command is refused as unknown, compare with this table before concluding anything, and
-suggest an upgrade. If `retp` is missing, see [references/install.md](references/install.md):
-a release archive checked against its `SHA256SUMS`, `cargo install retp-cli --features mcp`,
-or the Docker image `ghcr.io/geosiris-technologies/retp`. Ask before installing anything.
+suggest an upgrade. Read the error of a refused option too: 0.4.0 names its replacement
+("--partition is gone [...] Write `--header data-partition-id=VALUE`").
+
+If `retp` is missing, see [references/install.md](references/install.md): a release archive
+checked against its `SHA256SUMS`, `cargo install retp-cli --features mcp`, or the Docker image
+`ghcr.io/geosiris-technologies/retp`. Ask before installing anything.
 
 ## 2. Credentials never leak — the rules and why
 
@@ -92,15 +99,22 @@ version control. So:
 12. **An example `server.toml` you write holds references only** (`password = { file = "..." }`).
     retp refuses a literal value for `password`, `token`, `client_secret` or `secret`, naming the
     key and line without the value.
+13. **A header can be a secret too** (an API key, a cookie). Never give one with `--header` on
+    a command line: keep it in a catalogue entry, by reference
+    (`retp server add NAME URL --header-from x-api-key=env:NAME`). retp refuses a literal value
+    for a header whose name looks secret (`cookie`, anything with `authorization`, `key`,
+    `token`, `secret` or `password`), `retp mcp` refuses such a `--header`, and so does
+    `--as-browser`, which would write it in the URL. A header that carries nothing secret
+    (`--header data-partition-id=opendes`, `-H x-tenant=acme`) is an ordinary argument.
 
 ## 3. Reads run freely; writes wait for an explicit yes
 
 **Reads** — run them without asking: `probe`, `connect`, `dataspaces`, `resources`,
 `supported-types`, `get`, `array`, `prefetch`, `download`, `download-epc`, `shell` (with
-read commands only), `server list`, `server show`, `server test`, and `retp-conformance`
-**without** `--write`.
+read commands only), `server list`, `server show`, `server test`, `push --plan` (it reaches no
+server), and `retp-conformance` **without** `--write`.
 
-**Writes change the server**: `push`, `create-dataspace`, `delete-dataspace`, and
+**Writes change the server**: `push` (without `--plan`), `create-dataspace`, `delete-dataspace`, and
 `retp-conformance --write`. Before any of them:
 
 - state exactly which server (name and URL), which dataspace, and what will change
@@ -120,6 +134,26 @@ read commands only), `server list`, `server show`, `server test`, and `retp-conf
   asking; `--write-fallback-dataspace PATH` chooses that dataspace. See
   [references/conformance.md](references/conformance.md).
 
+**Show a push before it runs** (retp 0.4.0+): `retp push URL model.epc demo --plan` opens no
+session, reaches no server and sends nothing. It prints each island (the objects sent in one
+transaction), their arrays and bytes, each object's URI in the package and in the dataspace,
+and what is left out. Run it, show the user the summary, then ask for the yes. The same flags
+shape the plan and the push (`--objects`, `--bytes`, `--only`, `--well-known`, `--json`,
+`--rest`); `--skip-present` needs the server and is refused with `--plan`. Its exit code is not
+`0` when something would be left out, as a push's is not.
+
+**A push that stopped** (retp 0.4.0+) can go on where it stopped, with flags that are all off by
+default and are part of the write the user agrees to: `--journal FILE` records each committed
+island and, run again with the same file, leaves those out; `--skip-present` leaves out what
+the dataspace already holds (same URI, arrays of the same dimensions; the content is not
+compared); `--split halve` or `--split single` sends again, in smaller pieces, an island the
+store refused as a whole; `--reconnect N` opens a new session when the connection falls;
+`--resume-session` (with `--reconnect`) first asks the server for the lost session, an OSDU
+extension a server may not support. When a push stops, quote its `stopped at island N` line
+and any `cause:`, `missing (named by the server):` or `may be missing:` lines: they say which
+references the store found missing. A `may be missing:` line is retp's deduction, not the
+server's word: say so.
+
 **Downloads go to a new path.** `download-epc --out` overwrites an existing file without asking:
 check that the path (and the HDF5 files beside it) does not exist, and pick a new name if it
 does. `download --out DIR` keeps the files already in `DIR` and goes on where it stopped (that
@@ -135,15 +169,25 @@ Prefer, in this order:
    COMMAND` works too. `retp server list` shows what exists. To add one,
    collect the URL, the login method and its non-secret fields from the user, have them create
    the secret file, then `retp server add` with `--*-from` references and `retp server test
-   NAME`. Details and every method (basic, bearer, OAuth, Azure, Cognito, OSDU partition):
+   NAME`. Details and every method (basic, bearer, OAuth, Azure, Cognito, OSDU partition and
+   other headers):
    [references/catalogue.md](references/catalogue.md).
 2. **A URL with no login**: `retp connect wss://etp.example.com/etp`.
 3. **A URL with a login from the environment**, read from a file in the same command (rule 6).
 
 Non-secret options are ordinary arguments: `--user`, `--client-id`, `--token-url`,
-`--azure-tenant`, `--cognito-region`, `--oauth-scope`, `--partition` (OSDU), `--insecure` (a
-known-bad certificate only; it warns every time). OSDU's REST API is `--rest` with an
-`https://` URL, not the WebSocket's.
+`--azure-tenant`, `--cognito-region`, `--oauth-scope`, a `--header NAME=VALUE` that carries
+nothing secret, `--insecure` (a known-bad certificate only; it warns every time). OSDU's REST
+API is `--rest` with an `https://` URL, not the WebSocket's.
+
+**The headers a server wants** (retp 0.4.0+): a tenant, a routing key, OSDU's data partition.
+`--header NAME=VALUE` (`-H`, repeatable) sends one with every request to the server: the
+handshake, the probe of `/.well-known`, each REST call. The OSDU data partition is
+`--header data-partition-id=P`; `--partition` is refused from 0.4.0 (on 0.3.0, use
+`--partition P`). With a catalogue server, a `--header` is added to the entry's own; one the
+entry already has is refused, not replaced. The client writes some headers itself and refuses
+them as extra headers: `authorization` (that is the login), `host`, `content-type`,
+`sec-websocket-*` and the like.
 
 ## 5. Everyday commands
 
@@ -188,10 +232,10 @@ In the shell, ETP URIs need no quotes. `help <command>` gives its options.
 - Large listings: count lines (`... | wc -l`) or show the first ones; do not dump thousands
   of lines into the conversation.
 
-## 7. Field notes from real servers (retp 0.3.0)
+## 7. Field notes from real servers (retp 0.3.0, unless said otherwise)
 
-- **`retp shell NAME` does not work** in 0.3.0 although `docs/cli.md` shows it: it fails with
-  "an ETP endpoint is a ws:// or wss:// URL". Use `retp --server NAME shell` (or `retp NAME`, which
+- **`retp shell NAME` does not work**, in 0.3.0 and still in 0.4.0, although `docs/cli.md`
+  shows it: it fails with "an ETP endpoint is a ws:// or wss:// URL". Use `retp --server NAME shell` (or `retp NAME`, which
   opens the shell).
 - **`resources --count` does not count resources**: it asks the store for each resource's
   source and target counts (`sources N  targets M` columns). For a total, count the output
