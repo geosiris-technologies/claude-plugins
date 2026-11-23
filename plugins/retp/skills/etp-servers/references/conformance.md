@@ -16,7 +16,9 @@ ETP_TOKEN="$(cat ~/.config/retp/demo.token)" \
 
 Pick report paths that do not exist yet: `--out` and `--json` overwrite. Without `--out` the
 Markdown report goes to stdout. Useful options: `--dataspace PATH` (where to read; the first
-listed otherwise), `--type 'resqml20.*'`, `--partition P` (OSDU), `--rest` (OSDU's REST API),
+listed otherwise), `--type 'resqml20.*'`, `--header data-partition-id=P` (OSDU; from 0.4.0,
+which refuses `--partition P`), `--header NAME=VALUE` for the other headers a server wants
+(nothing secret on the line: a secret header goes in a catalogue entry), `--rest` (OSDU's REST API),
 `--insecure` (no certificate check: `tls.chain` is then *not checked*), `--tls-fallback`
 (check the certificate, report `tls.chain` failed if it is bad, and run the rest without it).
 Logins are the CLI's: the catalogue, or the `ETP_*` variables read from files
@@ -57,7 +59,8 @@ the ETP server itself was not judged.
   uuids share a prefix) and never that dataspace. `docs/conformance.md` does not say this:
   mention it, and prefer to name the fallback explicitly;
 - an OSDU store wants custom data on a new dataspace: `--dataspace-custom legaltags=...`,
-  `--dataspace-custom owners=...`, `--dataspace-custom viewers=...`;
+  `--dataspace-custom owners=...`, `--dataspace-custom viewers=...` (some deployments also
+  `otherRelevantDataCountries=...`);
 - unlike `retp`, `retp-conformance` does not ask for confirmation on a catalogue server marked
   `protected` (0.3.0): your own confirmation with the user is the only guard.
 

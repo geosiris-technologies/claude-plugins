@@ -4,7 +4,7 @@
 line, with HDF5 inside the wheel: no `h5py`. Use it when the user wants numbers in numpy, a
 loop over objects, a closed copy of some objects, or an object built from a dictionary. Run
 scripts from a folder of your own with `python -I`, never from inside a data folder. Tested:
-0.3.0 on CPython 3.11 (Linux x86_64).
+0.3.0 on CPython 3.11 (Linux x86_64); 0.4.0 on CPython 3.14 (Windows x86_64).
 
 Modules: `energyml.rust.epc` (`Epc`, `Summary`, `ArrayRef`), `energyml.rust.resqml`
 (`geometry_of`, `mesh_of`, `properties_of`, `export_of`, `formats`, `standard_metadata`),
@@ -24,7 +24,7 @@ pkg.dataspaces(), pkg.store_kind, pkg.path, pkg.attachments()
 ```
 
 `uri_of` on a uuid held in two versions (one without `objectVersion`, one with) returned the
-unversioned URI **without raising** in 0.3.0, although its docstring says it raises: compare
+unversioned URI **without raising** in 0.3.0 and 0.4.0, although its docstring says it raises: compare
 `[o for o in objs if o.uuid == u]` when versions matter.
 
 ## Reading objects and references
@@ -36,6 +36,11 @@ pkg.referenced_by(uri)                     # reads every object: slow on big pac
 needed, missing = pkg.needs([uri, ...])    # the closure an extraction or a copy must carry
 pkg.headers([uri, ...])                    # citations without reading the objects
 ```
+
+From 0.4.0, `referenced_by` and `needs` **raise** when one object of the package cannot be read
+(`cannot answer \`needs\`: 1 object(s) of the package could not be read, and one of them may be
+the one that points here: URI: XML error ...`), instead of answering without it. Report the
+named part and offer `energyml repair` ([checking-and-repairing.md](checking-and-repairing.md)).
 
 ## Arrays
 
@@ -49,6 +54,15 @@ part, dims = pkg.read_array_part(refs[0], start=[0, 0], count=[2, 3])
 Arrays come back **flat**; reshape with the dimensions. A missing `.h5` raises naming the file
 and the dataset. `pkg.pin_data_file(name, path)` reads a file the package names `name` from
 `path` (the `--h5 name=path` of the command line).
+
+HDF5 strings, from 0.4.0: upstream `docs/python.md` says a string dataset comes back as a
+`list[str]`, not a numpy array; the 0.4.0 changelog says strings are read as text (not NaN)
+and a column is refused rather than emptied. TODO(verify): not run (Lutetia holds no string
+dataset). A refusal there is the answer: report it, never substitute empty values.
+
+`pkg.array_files()` (0.4.0) is `energyml h5` as data: one dict per declared file,
+`{declared, pointers, found, example, proxies}`, `found` being `None` or `{path, origin,
+agrees}`. It writes nothing.
 
 ## Geometry, properties, export
 
@@ -97,7 +111,14 @@ pkg.save_as("W/edited.epc")                # never the original's path: save_as 
 
 pkg.plan_rename("OLD.h5", "NEW.h5")        # {from, to, objects, fields, relationships, refusals, allowed}
 pkg.rename_data_file("OLD.h5", "NEW.h5")   # moves the file NOW; then save_as at once
+pkg.repair_arrays("W/fixed.epc")           # 0.4.0: `h5 --fix`; writes W/fixed.epc, None if nothing to fix
 ```
+
+`rename_data_file` still moves the file before anything is saved in 0.4.0 (measured: `{'file':
+'moved', ...}`, the `.h5` renamed on disk while `is_dirty` was true). `repair_arrays` returns
+`{renamed, declarations, diagnostics, before, lost}`; on Lutetia with a renamed `.h5` it gave
+`declarations: 660, lost: 0` and, like `h5 --fix`, left the 3 WITSML channel-data pointers on
+the old name: prefer the rename (on a copy) for a renamed file.
 
 `put` refuses by name: an unknown type (`unknown type \`resqml22.Nope\` (not registered)`), a
 missing uuid, a field of the wrong type. There is no `save()`: always `save_as` to a new path.
@@ -113,4 +134,4 @@ pkg = Epc.create("one.epc"); pkg.put(open("object.json", encoding="utf-8").read(
 
 Its references then point at objects the new package does not hold (`check` reports them) and
 its arrays at an `.h5` that may not be beside it. An **XML** object outside a package cannot be
-read by 0.3.0 (`put` takes JSON only); ask for the package it came from.
+read by 0.3.0 or 0.4.0 (`put` takes JSON only); ask for the package it came from.

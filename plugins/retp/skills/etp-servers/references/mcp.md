@@ -9,8 +9,12 @@ image from 0.3.0. `retp mcp --help` is the authority.
 
 An MCP client writes the command it launches into a configuration file, often readable by
 others and sometimes committed. So `retp mcp` **refuses** `--token`, `--password` and
-`--client-secret`, and nothing secret may go into that configuration: no secret in `args`, no
-secret under `env`.
+`--client-secret`, and from 0.4.0 a `--header` whose name says it carries a secret
+(`x-api-key`, `cookie`, ...), and nothing secret may go into that configuration: no secret in
+`args`, no secret under `env`. A header that carries nothing secret is accepted
+(`--header data-partition-id=opendes`); a secret one goes in a catalogue entry
+(`retp server add gateway URL --header-from x-api-key=env:GATEWAY_API_KEY`), served with
+`retp mcp --server gateway --dataspace demo`.
 
 ## With the catalogue (retp 0.3.0+) — preferred
 

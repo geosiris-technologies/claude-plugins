@@ -1,6 +1,7 @@
 # The server catalogue (retp 0.3.0+)
 
-The catalogue keeps servers by name, with their URL, partition and login method, and **holds
+The catalogue keeps servers by name, with their URL, extra headers (OSDU's data partition is
+one), login method and write defaults, and **holds
 no secret: only a reference** to one, `file:PATH` or `env:NAME`. It is the preferred way to
 reach a server from this skill, because nothing secret ever passes through a command line.
 `retp server --help`, `retp server add --help` and `retp catalog init --help` are the authority
@@ -25,7 +26,7 @@ Claude's tool, give everything as options: `retp server add NAME URL --auth METH
 script is never asked a question; a missing field is refused by name.
 
 1. Ask the user for the URL, the method and its non-secret fields (user, client id, tenant,
-   token URL, scope, region, partition).
+   token URL, scope, region, data partition, other headers the server wants).
 2. Ask them to put the secret in a file **themselves** — not through you — readable by them
    only, for example:
 
@@ -56,13 +57,44 @@ script is never asked a question; a missing field is refused by name.
 | `azure` | `--tenant T --client-id ID [--scope S]` (`--user U` for a password grant) | `--client-secret-from REF` (or `--password-from REF`) |
 | `cognito` | `--region R --client-id ID --user U` | `--password-from REF` [`--client-secret-from REF`] |
 
-Other options: `--partition P` (OSDU data partition), `--other-url URL` and
-`--transport etp|rest` (a server with both a WebSocket and a REST API), `--insecure` (a
-known-bad certificate; warned at every connection), `--protected` (writes ask for
-confirmation), `--description`, `--alias NAME`, `--legal-tag`, `--owner`, `--viewer` (OSDU write
-defaults added to `create-dataspace`), `--force` (replace an entry). `--header` /
-`--header-from` define extra headers, but 0.3.0 cannot send them yet and refuses to connect to
-such an entry, by name.
+Other options: `--other-url URL` and `--transport etp|rest` (a server with both a WebSocket and
+a REST API), `--insecure` (a known-bad certificate; warned at every connection), `--protected`
+(writes ask for confirmation), `--as-browser` (connect as a web page can), `--description`,
+`--alias NAME`, `--force` (replace an entry).
+
+**Write defaults** for `create-dataspace` on an OSDU server, each repeatable: `--legal-tag`,
+`--owner`, `--viewer`, and from 0.4.0 `--other-relevant-data-country` (a country code; some
+OSDU deployments require it). They become `--custom legaltags=...`, `owners=...`,
+`viewers=...`, `otherRelevantDataCountries=...` unless the command line gives its own.
+
+### Headers the server wants (retp 0.4.0+)
+
+`--header NAME=VALUE` stores a header with a literal value, `--header-from NAME=REF` one read
+from a reference (`env:VAR` or `file:PATH`); both repeat. Every command on that server then
+sends them with every request. retp 0.3.0 accepted them in an entry but refused to connect to
+it, by name; 0.4.0 sends them.
+
+```sh
+retp server add rddms wss://rddms.example.com/api/reservoir-ddms-etp/v2/ --auth bearer \
+    --token-from file:~/.config/retp/rddms.token \
+    --header data-partition-id=opendes \
+    --legal-tag opendes-public-usa-dataset-1 --owner data.default.owners@opendes.example.com \
+    --viewer data.default.viewers@opendes.example.com --other-relevant-data-country US
+retp server add gateway wss://etp.example.com/etp --auth none \
+    --header-from x-api-key=env:GATEWAY_API_KEY
+```
+
+- **The OSDU data partition is a header**: `--header data-partition-id=P`. `--partition` is
+  refused from 0.4.0, on `server add` as on every command. An entry written by 0.3.0 with
+  `partition = "..."` still loads and is sent as `data-partition-id`; an entry with both is
+  refused ("keep the header": remove the `partition` line).
+- **A header whose name looks secret** (`cookie`, anything with `authorization`, `key`,
+  `token`, `secret` or `password`) is refused as a literal: use `--header-from` with a
+  reference, and have the user set the variable or write the file themselves.
+  `retp server show NAME` then says whether the reference resolves, without the value.
+- `authorization` is never an extra header: it is the login (`--auth`).
+- A `--header` given on a command line is added to the entry's headers; one the entry already
+  has is refused, not replaced.
 
 A name is lowercase letters, digits, `.`, `_`, `-`, and cannot be a command of `retp`.
 
@@ -73,7 +105,7 @@ retp --server my-server dataspaces    # works in every shell; -s my-server for s
 retp '@my-server' dataspaces          # `@` always means a server; quoted, as PowerShell needs
 retp my-server dataspaces             # the same, unless a command has that name
 retp --server my-server dataspaces    # the same; -s is short
-retp --server my-server shell         # the shell (retp shell my-server fails in 0.3.0)
+retp --server my-server shell         # the shell (retp shell my-server fails, 0.3.0 and 0.4.0)
 retp-conformance --server my-server --out report.md
 retp mcp --server my-server --dataspace demo
 ```
@@ -132,4 +164,12 @@ protected = true
 method = "basic"
 user = "demo-user"
 password = { file = "~/.config/retp/my-server.pass" }
+
+[headers]                                # retp 0.4.0+ sends them
+"data-partition-id" = "opendes"          # OSDU's data partition: nothing secret
+x-api-key = { env = "MY_SERVER_API_KEY" }  # a secret header: a reference only
+
+[defaults]                               # for create-dataspace on an OSDU server
+legal_tags = ["opendes-public-usa-dataset-1"]
+other_relevant_data_countries = ["US"]   # retp 0.4.0+
 ```

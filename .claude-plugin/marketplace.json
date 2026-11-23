@@ -11,7 +11,7 @@
     {
       "name": "retp",
       "source": "./plugins/retp",
-      "description": "Work with ETP v1.2 servers (RESQML, WITSML, PRODML, OSDU Reservoir DDMS) through the retp command line: probe, list, read, download, check conformance, serve a dataspace over MCP; credentials by reference only, writes only with consent.",
+      "description": "Work with ETP v1.2 servers (RESQML, WITSML, PRODML, OSDU Reservoir DDMS) through the retp command line: probe, list, read, download, plan and resume a push, check conformance, serve a dataspace over MCP; credentials by reference only, writes only with consent.",
       "category": "database",
       "keywords": ["etp", "energistics", "resqml", "witsml", "prodml", "osdu", "rddms", "energyml"]
     },
